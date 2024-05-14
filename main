@@ -1,4 +1,9 @@
 #!/bin/bash
+interrupcao() {
+    printf "\nVocê pressionou Ctrl+C. Para sair do script, use a opção 'Finalizar o programa' no menu."
+}
+# Definindo a função 'interrupcao' para lidar com o sinal SIGINT
+trap interrupcao SIGINT
 mkdir -p ./arquivos
 mkdir -p ./arquivos/simples
 mkdir -p ./arquivos/extraidos
