@@ -1,8 +1,7 @@
 #!/bin/bash
 interrupcao() {
-    printf "\nVocê pressionou Ctrl+C. Para sair do script, use a opção 'Finalizar o programa' no menu."
+ printf "\n\e[37mVocê pressionou Ctrl+C. Para sair do script, use a opção 'Finalizar o programa' no menu.\e[0m"
 }
-# Definindo a função 'interrupcao' para lidar com o sinal SIGINT
 trap interrupcao SIGINT
 mkdir -p ./arquivos
 mkdir -p ./arquivos/simples
@@ -10,199 +9,257 @@ mkdir -p ./arquivos/extraidos
 mkdir -p ./arquivos/restaurados
 mkdir -p ./arqComp
 mkdir -p ./arqBack
-# Função para exibir o cabeçalho inicial
 exibir_cabecalho() {
-        clear 
-        HORA=$(date +%m)
-        if [ $HORA -ge 01 ] && [ $HORA -lt 07 ]; then
-                N="1"
-        else
-                N="2"
-        fi
-        printf "#################################################################
-# IBMEC\t\t\t\t\t\t\t\t#
-# Sistemas Operacionais\t\t\t  Semestre %s de %s\t#
-# Código: IBM8940\t\t\t  Turma: 8001\t\t#
-# Professor: Luiz Fernando T. de Farias\t\t\t\t#
-#---------------------------------------------------------------#
-# Equipe Desenvolvedora:\t\t\t\t\t#
-#\tAluno: Breno Huf\t\t\t\t\t#
-#\tAluno: Bernardo de Souza Silva\t\t\t\t#
-#---------------------------------------------------------------#
-# Rio de Janeiro, %s de %s de %s\t\t\t\t#
-# Hora do Sistema: %s Horas e %s minutos\t\t\t#
+	clear
+ 	HORA=$(date +%m)
+ 	if [ $HORA -ge 01 ] && [ $HORA -lt 07 ]; then
+ 		N="1"
+ 	else
+ 		N="2"
+ 	fi
+ 	printf "#################################################################
+# \e[36mIBMEC\e[0m\t\t\t\t\t\t\t\t#
+# \e[36mSistemas Operacionais\t\t\t Semestre\e[31m %s \e[36mde\e[31m %s \e[0m\t#
+# \e[36mCódigo: \e[31mIBM8940\e[36m\t\t\t Turma: \e[31m8001\e[0m\t\t#
+# \e[36mProfessor: \e[31mLuiz Fernando T. de Farias\e[0m\t\t\t\t#
+#\e[32m---------------------------------------------------------------\e[0m#
+# \e[36mEquipe Desenvolvedora:\e[0m\t\t\t\t\t#
+#\t\e[36mAluno: \e[31mBreno Huf\e[0m\t\t\t\t\t#
+#\t\e[36mAluno: \e[31mBernardo de Souza Silva\e[0m\t\t\t\t#
+#\e[32m---------------------------------------------------------------\e[0m#
+# \e[36mRio de Janeiro,\e[31m %s \e[36mde\e[31m %s \e[36mde\e[31m %s\e[0m\t\t\t\t#
+# \e[36mHora do Sistema:\e[31m %s \e[36m Horas e\e[31m %s\e[36m Minutos\e[0m\t\t\t#
 #################################################################
-
-Menu de Escolhas:
-    \t1) Manipulação de arquivo (Escrever, Ler, Remover, Criar)
-    \t2) Compactar e Extrair arquivo
-    \t3) Backup arquivo
-    \t4) Restaurar arquivo
-    \t5) Finalizar o programa.
-
-" "$(echo "$N")" "$(date +%Y)" "$(date +%d)" "$(date +%B)" "$(date +%Y)" "$(date +%H)" "$(date +%M)"
+\e[36mMenu de Escolhas:
+ \t\e[33m1)\e[31m Manipulação de arquivo
+ \t\e[33m2)\e[31m Compactar ou Extrair arquivo
+ \t\e[33m3)\e[31m Backup ou restaurar arquivo
+ \t\e[33m4)\e[31m Renomear arquivo
+ \t\e[33m5)\e[31m Finalizar o programa.\e[0m
+ " "$(echo "$N")" "$(date +%Y)" "$(date +%d)" "$(date +%B)" "$(date +%Y)" "$(date +%H)" "$(date +%M)"
 }
 listar_e_escolher_diretorio() {
-        echo "Diretórios disponíveis:"
-        i=1
-        for diretorio in ./arquivos/*; do
-                echo "$i) $(basename "$diretorio")"
-                ((i++))
-        done
-        echo "Escolha o número correspondente ao diretório:"
-        read num_diretorio
-        diretorio=$(ls -d ./arquivos/*/ | sed -n "${num_diretorio}p")
-        if [ -z "$diretorio" ]; then
-                echo "Diretório não encontrado/existe."
-                return 1
-        fi
-        cd "$diretorio" || return 1
+	echo -e "\e[36mDiretórios disponíveis:\e[0m"
+ 	i=1
+ 	for diretorio in ./arquivos/*; do
+ 		echo -e "\e[33m$i)\e[31m $(basename "$diretorio")\e[0m"
+ 		((i++))
+ 	done
+ 	echo -ne "\e[34mEscolha o número correspondente ao diretório:\e[0m"
+ 	read num_diretorio
+ 	# Verifica se o usuário não digitou nada
+ 	if [ -z "$num_diretorio" ]; then
+ 		echo -e "\e[35mDiretório não encontrado.\e[0m"
+ 		return 1
+ 	fi
+ 	diretorio=$(ls -d ./arquivos/*/ | sed -n "${num_diretorio}p")
+ 	if [ -z "$diretorio" ]; then
+ 		echo -e "\e[35mDiretório não encontrado.\e[0m"
+ 		return 1
+ 	fi
+ 	if ! cd "$diretorio" 2>/dev/null; then
+ 		echo -e "\e[35mDiretório não encontrado.\e[0m"
+ 		return 1
+ 	fi
 }
 listar_e_escolher_arquivo() {
-    echo "Arquivos disponíveis para manipulação:"
-    i=1
-    for arquivo in *; do
-        echo "$i) $(basename "$arquivo")"
-        ((i++))
-    done
-    echo "Digite o número correspondente ao arquivo:"
-    read num_arquivo
-    arquivo=$(ls | sed -n "${num_arquivo}p")
-    if [ -z "$arquivo" ]; then
-        echo "Arquivo não encontrado/existe."
-        return 1
-    fi
+ 	echo -e "\e[36mArquivos disponíveis para manipulação:\e[0m"
+ 	i=1
+ 	for arquivo in *; do
+ 		echo -e "\e[33m$i)\e[31m $(basename "$arquivo")\e[0m"
+ 		((i++))
+ 	done
+ 	echo -ne "\e[34mDigite o número correspondente ao arquivo:\e[0m"
+ 	read num_arquivo
+ 	arquivo=$(ls | sed -n "${num_arquivo}p")
+ 	if [ -z "$arquivo" ]; then
+ 		echo -e "\e[35mArquivo não encontrado/existe.\e[0m"
+ 		return 1
+	fi
 }
-# Função para manipulação de arquivos
 manipular_arquivo() {
-        echo "Escolha a operação (1-Escrever 2-Ler 3-Remover 4-Criar): "
-        read opcao
-        case $opcao in
-                1)
-                        listar_e_escolher_diretorio || return
-                        listar_e_escolher_arquivo
-                        if [ -f "$arquivo" ]; then
-                                echo "Digite o texto para escrever no arquivo:"
-                        read texto
-                                echo "$texto" > "$arquivo"
-                                echo "Texto escrito com sucesso!"
-                        else
-                                echo "O arquivo não existe."
-                        fi
-                        cd ../..
-                        ;;    
-                2)
-                        listar_e_escolher_diretorio || return
-                        listar_e_escolher_arquivo
-                        if [ -f "$arquivo" ]; then
-                                cat "$arquivo"
-                        else
-                                echo "O arquivo não existe."
-                        fi
-                        cd ../..
-                        ;;
-                3)
-                        listar_e_escolher_diretorio || return
-                        listar_e_escolher_arquivo
-                        if [ -f "$arquivo" ]; then
-                                rm "$arquivo"
-                                echo "Arquivo removido com sucesso!"
-                        else
-                                echo "O arquivo não existe."
-                        fi
-                        cd ../..
-                        ;;
-                4)
-                        echo "Digite o nome do arquivo:"
-                        read arquivo     
-                        touch "./arquivos/simples/$arquivo"
-                        echo "Arquivo criado com sucesso!"
-                        ;;
-                *)
-                        echo "Opção inválida!"
-                        ;;
-        esac
+ 	echo -ne "\e[34mEscolha a operação (\e[33m1-\e[31mEscrever \e[33m2- \e[31mLer \e[33m3-\e[31mRemover \e[33m4-\e[31mCriar\e[34m):\e[0m"
+ 	read opcao
+ 	case $opcao in
+		1)
+ 			listar_e_escolher_diretorio || return
+			listar_e_escolher_arquivo
+ 			if [ -f "$arquivo" ]; then
+				echo -e "\e[34mDigite o texto para escrever no arquivo:\e[0m"
+				read texto
+ 				echo "$texto" > "$arquivo"
+ 				echo -e "\e[32mTexto escrito com sucesso!\e[0m"
+			fi
+			cd ../..
+ 			;;
+ 		2)
+ 			listar_e_escolher_diretorio || return
+ 			listar_e_escolher_arquivo
+ 			if [ -f "$arquivo" ]; then
+ 				cat "$arquivo"
+ 			fi
+			cd ../..
+ 			;;
+		3)
+ 			listar_e_escolher_diretorio || return
+	 		listar_e_escolher_arquivo
+	 		if [ -f "$arquivo" ]; then
+				rm "$arquivo"
+				echo -e "\e[32mArquivo removido com sucesso!\e[0m"
+			fi
+			cd ../..
+ 			;;
+ 		4)
+ 			echo -e "\e[34mDigite o nome do arquivo:\e[0m"
+ 			read arquivo
+ 			touch "./arquivos/simples/$arquivo"
+ 			echo -e "\e[32mArquivo criado com sucesso!\e[0m"
+ 			;;
+ 		*)
+ 			echo -e "\e[35mOpção inválida!\e[0m"
+ 			;;
+ 	esac
+}
+compactar_extrair(){
+	echo -ne "\e[34mEscolha a operação (\e[33m1-\e[31mCompactar \e[33m2- \e[31mExtrair\e[34m):\e[0m "
+	read opcao
+ 	case $opcao in
+ 		1)
+ 			listar_e_escolher_diretorio || return
+ 			listar_e_escolher_arquivo
+			if [ -z "$arquivo" ]; then
+ 				echo -e "\e[35mNenhum arquivo selecionado.\e[0m"
+ 				cd ../..
+ 				return
+			fi
+ 			if [ -f "$arquivo" ]; then
+ 				tar -czvf "../../arqComp/$arquivo.tar.gz" "$arquivo"
+ 				echo -e "\e[32mArquivo compactado com sucesso!\e[0m"
+ 			else
+ 				echo -e "\e[35mErro ao listar diretório ou escolher arquivo.\e[0m"
+			fi
+ 			cd ../..
+ 			;;
+		2)
+			if [ -n "$(find arqComp -maxdepth 1 -name '*.tar.gz' -print -quit)" ]; then
+ 				echo -e "\e[36mArquivos disponíveis para extração:\e[0m"
+ 				i=1
+ 				for arquivo in arqComp/*.tar.gz; do
+ 					echo -e "\e[33m$i)\e[31m $(basename "$arquivo")\e[0m"
+ 					((i++))
+ 				done
+				echo -ne "\e[34mDigite o número correspondente ao arquivo compactado:\e[0m"
+ 				read -r num_arquivo
+ 				if [ -z "$num_arquivo" ]; then
+ 					echo -e "\e[35mArquivo não encontrado/existe.\e[0m"
+ 					return
+ 				fi
+ 				arquivo="arqComp/$(ls arqComp/*.tar.gz | sed -n "${num_arquivo}p" | awk -F'/' '{print $NF}')"
+ 				if [ -z "$arquivo" ]; then
+ 					echo -e "\e[35mArquivo não encontrado/existe.\e[0m"
+				else
+ 					tar -xzvf "$arquivo" -C ./arquivos/extraidos/
+ 					echo -e "\e[32mArquivo extraído com sucesso!\e[0m"
+				fi
+			else
+				echo -e "\e[35mNenhum aquivo compactado encontrado.\e[0m"
+ 			fi
+ 			;;
+ 		*)
+ 			echo -e "\e[35mOpção inválida!\e[0m"
+ 			;;
+ 	esac
+}
+backup_restaurar(){
+	echo -ne "\e[34mEscolha a operação (\e[33m1-\e[31mBackup \e[33m2- \e[31mRestaurar\e[34m):\e[0m "
+ 	read opcao
+ 	case $opcao in
+		1)
+			listar_e_escolher_diretorio || return
+ 			listar_e_escolher_arquivo
+			if [ -z "$arquivo" ]; then
+ 				echo -e "\e[35mArquivo não encontrado/existe.\e[0m"
+ 			elif [ -f "$arquivo" ]; then
+ 				cp "$arquivo" "../../arqBack/$arquivo.bak"
+ 				echo -e "\e[32mBackup realizado com sucesso!\e[0m"
+ 			else
+ 				echo -e "\e[35mErro ao listar diretório ou escolher arquivo.\e[0m"
+ 			fi
+			cd ../..
+			;;
+		2)
+			echo -e "\e[36mArquivos disponíveis para restauração:\e[0m"
+ 			i=1
+ 			if [ -n "$(find arqBack -maxdepth 1 -name '*.bak' -print -quit)" ]; then
+ 				for arquivo in arqBack/*.bak; do
+ 					echo -e "\e[33m$i)\e[31m $(basename "$arquivo")\e[0m"
+ 					((i++))
+ 				done
+ 				echo -ne "\e[34mDigite o número correspondente ao arquivo de Backup:\e[0m"
+ 				read -r num_arquivo
+				if [ -z "$num_arquivo" ]; then
+ 					echo -e "\e[35mArquivo não encontrado/existe.\e[0m"
+ 					return
+ 				fi
+ 				arquivo="arqBack/$(ls arqBack/*.bak | sed -n "${num_arquivo}p" | awk -F'/' '{print $NF}')"
+ 				if [ ! -f "$arquivo" ]; then
+ 					echo -e "\e[35mArquivo não encontrado/existe.\e[0m"
+				else
+ 					cp "$arquivo" "./arquivos/restaurados/"
+ 					echo -e "\e[32mArquivo restaurado com sucesso!\e[0m"
+ 				fi
+			else
+ 				echo -e "\e[35mNenhum aquivo de Backup encontrado.\e[0m"
+			fi
+			;;
+		*)
+			;;
+	esac
+}
+renomear_arquivo() {
+ 	listar_e_escolher_diretorio || return
+ 	listar_e_escolher_arquivo
+ 	if [ -f "$arquivo" ]; then
+ 		echo -e "\e[34mDigite o novo nome para o arquivo:\e[0m"
+ 		read novo_nome
+ 		mv "$arquivo" "$novo_nome"
+ 		echo -e "\e[32mArquivo renomeado com sucesso!\e[0m"
+	else
+		echo -e "\e[35mArquivo não encontrado/existe.\e[0m"
+	fi
+ 	cd ../..
 }
 exibir_cabecalho
 while true; do
-        echo -n "Selecione uma opção:"
-        read L
-        if [ -z "$L" ]; then
-                continue
-        fi
-        case $L in
-                1)
-                        manipular_arquivo
-                        ;;
-                2)
-                        echo "Escolha a operação (1-Compactar 2-Extrair): "
-                        read opcao
-                        case $opcao in
-                                1)
-                                        listar_e_escolher_diretorio || return
-                                        listar_e_escolher_arquivo
-                                        tar -czvf "../../arqComp/$arquivo.tar.gz" "$arquivo"
-                                        echo "Arquivo compactado com sucesso!"
-                                        cd ../..
-                                        ;;
-                                2)
-                                        echo "Arquivos disponíveis para extração:"
-                                        i=1
-                                        for arquivo in arqComp/*.tar.gz; do
-                                                echo "$i) $(basename "$arquivo")"
-                                                ((i++))
-                                        done
-                                        echo "Digite o número correspondente ao arquivo compactado:"
-                                        read num_arquivo
-                                        arquivo=$(ls arqComp/*.tar.gz | sed -n "${num_arquivo}p")
-                                        if [ -z "$arquivo" ]; then
-                                                echo "Arquivo não encontrado/existe."
-                                                continue
-                                        fi
-                                        tar -xzvf "$arquivo" -C ./arquivos/extraidos/
-                                        echo "Arquivo extraído com sucesso!"
-                                        ;;
-                                *)
-                                        echo "Opção inválida!"
-                                        ;;
-                        esac
-                        ;;
-                3)
-                        listar_e_escolher_diretorio || return
-                        listar_e_escolher_arquivo
-                        cp "$arquivo" "../../arqBack/$arquivo.bak"
-                        echo "Backup realizado com sucesso!"
-                        cd ../..
-                        ;;
-                4)
-                        echo "Arquivos disponíveis para restauração:"
-                        i=1
-                        for arquivo in arqBack/*.bak; do
-                                echo "$i) $(basename "$arquivo")"
-                                ((i++))
-                        done
-                        echo "Digite o número correspondente ao arquivo compactado:"
-                        read num_arquivo
-                        arquivo=$(ls arqBack/*.bak | sed -n "${num_arquivo}p")
-                        if [ -z "$arquivo" ]; then
-                                echo "Arquivo não encontrado/existe."
-                                continue
-                        fi
-                        cp "$arquivo" "./arquivos/restaurados/"
-                        echo "Arquivo extraído com sucesso!"
-                        ;;
-                5)
-                        echo "Encerrando o programa."
-                        rm -r ./arquivos
-                        rm -r ./arqComp
-                        rm -r ./arqBack
-                        exit 0
-                        ;;
-                *)
-                        echo "Opção inválida!"
-                        ;;
-        esac
-# Pausa para retornar ao cabeçalho inicial
-read -p "Pressione Enter para retornar ao cabeçalho inicial..."
+echo -ne "\e[34mSelecione uma opção:\e[0m"
+read L
+if [ -z "$L" ]; then
+	continue
+fi
+case $L in
+ 	1)
+ 		manipular_arquivo
+ 		;;
+ 	2)
+ 		compactar_extrair
+ 		;;
+ 	3)
+		backup_restaurar
+ 		;;
+ 	4)
+		renomear_arquivo
+		;;
+ 	5)
+ 		echo -e "\e[33mEncerrando o programa.\e[0m"
+ 		rm -r ./arquivos
+ 		rm -r ./arqComp
+ 		rm -r ./arqBack
+ 		exit 0
+ 		;;
+ 	*)
+ 		echo -e "\e[35mOpção inválida!\e[0m"
+ 		;;
+esac
+read -p $'\e[33mPressione Enter para retornar ao cabeçalho inicial...\e[0m'
 exibir_cabecalho
 done
